@@ -3,6 +3,7 @@ import dotenv  from "dotenv";
 import connectDB from './config/db.js';
 import authRouter from './routes/auth.routes.js';
 import cookieParser from 'cookie-parser'
+import projectRouter from './routes/project.routes.js';
 dotenv.config()
 
 const PORT = process.env.PORT || 5000;
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/auth',authRouter);
+app.use('/api/project', projectRouter);
 
 app.listen(PORT, async ()=>{
     console.log(`Backend is Running on ${PORT}`);

@@ -1,10 +1,5 @@
 import mongoose from "mongoose";
 
-const fileSchema = new mongoose.Schema({
-  filename: String,
-  content: String,
-});
-
 const projectSchema = new mongoose.Schema(
   {
     title: {
@@ -19,21 +14,36 @@ const projectSchema = new mongoose.Schema(
       required: true,
     },
 
-    collaborators: [
+    members: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        role: {
+          type: String,
+          enum: ["owner", "contributor", "viewer"],
+          default: "contributor",
+        },
       },
     ],
+    
+    files: [
+      {
+        file: {
+          type: String,
+          ref: 'File'
+        }
+      }
+    ],
 
-    files: [fileSchema],
-
-    isPublic: {
-      type: Boolean,
-      default: false,
+    visibility: {
+        type: String,
+        enum: ["public", "private"],
+        default: "private"
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Project", projectSchema);
