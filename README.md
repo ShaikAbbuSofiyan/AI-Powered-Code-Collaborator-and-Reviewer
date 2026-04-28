@@ -1,11 +1,6 @@
 # AI-Powered-Code-Collaborator-and-Reviewer
 Full  Stack + GenAI Project
 
-
-Here’s a **clean, professional README description** you can directly use on GitHub. I’ll keep it **recruiter-friendly + developer-friendly**—not too flashy, but strong and clear 👍
-
----
-
 # 🚀 AI-Powered Code Review & Collaboration Platform
 
 A full-stack **MERN (MongoDB, Express, React, Node.js)** application that enables developers to **write, analyze, and collaborate on code** with the help of **AI-driven insights**.
