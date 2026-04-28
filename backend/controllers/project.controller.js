@@ -60,3 +60,37 @@ export const deleteProject = async (req, res) => {
     });
   }
 };
+
+export const addCollaborator = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const { email } = req.body;
+    const project = await projectModel.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    if (project.members.includes(user._id)) {
+      return res.status(400).json({
+        message: "User is already a collaborator",
+      });
+    }
+    project.members.push({user: user._id});
+    await project.save();
+    res.status(200).json({
+      project,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: `Add Collaborator error: ${error}`,
+    });
+  }
+};
+
