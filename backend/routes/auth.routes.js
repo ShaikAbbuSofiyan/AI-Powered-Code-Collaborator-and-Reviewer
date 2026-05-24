@@ -10,7 +10,7 @@ authRouter.post('/register', Register);
 // @route   POST api/auth/login
 authRouter.post('/login', Login);
 
-authRouter.get('/getUser', isUserAuth, getUser)
+authRouter.get('/getUser', isUserAuth, getUser);
 
 
 export default authRouter;

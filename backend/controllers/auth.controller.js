@@ -18,9 +18,9 @@ export const Register =  async (req, res) => {
         });
         const token = jwt.sign({user: newUser}, process.env.JWT_SECRET);
         res.cookie('token', token);
-        console.log("user created successfully");
+        
         return res.status(200).json({
-            newUser
+            user: newUser
         });
         
     } catch (error) {
