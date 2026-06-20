@@ -1,4 +1,5 @@
-  import projectModel from "../models/project.model.js";
+  import fileModel from "../models/file.model.js";
+import projectModel from "../models/project.model.js";
   import userModel from "../models/user.model.js";
 
   export const createProject = async (req, res) => {
@@ -133,5 +134,29 @@
       return res.status(500).json({
         message:`Get Project errro:${error}`
       });
+    }
+  }
+
+  export const addFile = async (req, res) => {
+    try {
+      const {project,fileName, content} = req.body;
+      if(!fileName){
+        return res.status(400).json({
+          message: "file name is required"
+        })
+      }
+     
+      const  f = await fileModel.create({
+        fileName,
+        content,
+        project:project,
+        createdBy:req.userId
+      });
+      return res.status(201).json(project);
+
+    } catch (error) {
+      return res.status(500).json({
+        message: `Add Files error ${error}`
+      })
     }
   }

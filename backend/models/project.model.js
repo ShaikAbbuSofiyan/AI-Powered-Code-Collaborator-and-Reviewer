@@ -30,10 +30,8 @@ const projectSchema = new mongoose.Schema(
     
     files: [
       {
-        file: {
-          type: String,
-          ref: 'File'
-        }
+        type: String,
+        ref: 'File'
       }
     ],
 

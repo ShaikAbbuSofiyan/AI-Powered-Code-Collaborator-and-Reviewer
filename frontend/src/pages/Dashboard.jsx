@@ -75,7 +75,7 @@ useEffect(() => {
                   <div key={index}>
                     <Link to= "/workspace">
                     
-                    <ProjectCard  title = {`${project.title}`} color = {"gray"} branch = {"sofiyan"}  lang = {"Typescript"} description = {`${project.description}`} commits = {""}/>
+                    <ProjectCard  title = {`${project.title}`} color = {"gray"} branch = {"sofiyan"}  lang = {"Typescript"} description = {`${project.description}`} commits = {""} id = {`${project._id}`}/>
                     </Link>
                   </div>
                 )): ""

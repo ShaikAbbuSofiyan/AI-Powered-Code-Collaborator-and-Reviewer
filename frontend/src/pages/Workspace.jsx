@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import Editor from "@monaco-editor/react";
+import API from "../services/api.js";
 
 import {
   ChevronRight,
@@ -170,8 +171,34 @@ const messages = [
   },
 ];
 
-export default function Workspace() {
+export default function Workspace(params) {
   const [active, setActive] = useState("ChatPanel.jsx");
+  const [project, setProject] = useState(null);
+  const [files, setFiles] = useState([]);
+  const {id} = useParams()
+  useEffect(()=>{
+    async function getProject() {
+      
+      try {
+  
+        const response = await API.get(
+            `/api/projects/${id}`,
+            { withCredentials: true }
+        );
+  
+        setProject(response.data.project);
+        console.log(response.data)
+        
+      } catch (error) {
+        
+        console.log(error);
+        
+      }
+    }
+    
+    getProject();
+    setFiles(project?.files)
+  },[id])
 
   const [tabs, setTabs] = useState([
     "Editor.jsx",
@@ -196,12 +223,12 @@ export default function Workspace() {
         <span className="text-gray-500">/</span>
 
         <span className="text-sm text-gray-300">
-          atlas-web
+          {project?.title}
         </span>
 
         <div className="flex items-center gap-1 text-xs bg-zinc-800 px-2 py-1 rounded">
           <GitBranch size={12} />
-          feat/streaming
+          {params.branch}
         </div>
 
         <div className="ml-auto flex items-center gap-2">
@@ -299,7 +326,7 @@ export default function Workspace() {
               defaultLanguage="javascript"
               theme="vs-dark"
               path={active}
-              defaultValue={sampleCode}
+              defaultValue={files}
               options={{
                 fontSize: 14,
                 minimap: { enabled: false },
