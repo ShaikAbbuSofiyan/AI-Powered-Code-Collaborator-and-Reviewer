@@ -24,51 +24,18 @@ import {
 // Helper function
 const cn = (...classes) => classes.filter(Boolean).join("");
 
-// File Tree Data
-const tree = [
-  {
-    name: "src",
-    type: "folder",
-    children: [
-      {
-        name: "components",
-        type: "folder",
-        children: [
-          { name: "Button.jsx", type: "file", ext: "jsx" },
-          { name: "ChatPanel.jsx", type: "file", ext: "jsx" },
-          { name: "Editor.jsx", type: "file", ext: "jsx" },
-        ],
-      },
-      {
-        name: "lib",
-        type: "folder",
-        children: [
-          { name: "agent.js", type: "file", ext: "js" },
-          { name: "utils.js", type: "file", ext: "js" },
-        ],
-      },
-      { name: "App.jsx", type: "file", ext: "jsx" },
-      { name: "main.jsx", type: "file", ext: "jsx" },
-    ],
-  },
-  {
-    name: "public",
-    type: "folder",
-    children: [{ name: "favicon.svg", type: "file", ext: "svg" }],
-  },
-  { name: "package.json", type: "file", ext: "json" },
-  { name: "README.md", type: "file", ext: "md" },
-];
-
 const extColors = {
   jsx: "text-blue-400",
   js: "text-yellow-400",
   json: "text-orange-400",
   md: "text-gray-400",
   svg: "text-green-400",
+  py: "text-yellow-400",
 };
 
-function FileTree({ nodes, depth = 0, active, onSelect }) {
+
+
+function FileTree({ nodes, depth = 0, active, onSelect, setSelectedFile }) {
   return (
     <ul className="space-y-1">
       {nodes.map((node) => (
@@ -78,18 +45,19 @@ function FileTree({ nodes, depth = 0, active, onSelect }) {
           depth={depth}
           active={active}
           onSelect={onSelect}
+          setSelectedFile={setSelectedFile}
         />
       ))}
     </ul>
   );
 }
 
-function TreeItem({ node, depth, active, onSelect }) {
+function TreeItem({ node, depth, active, onSelect, setSelectedFile }) {
   const [open, setOpen] = useState(depth < 2);
 
   const isActive = active === node.name;
 
-  if (node.type === "folder") {
+  if (node.isFolder === true) {
     return (
       <li>
         <button
@@ -118,21 +86,28 @@ function TreeItem({ node, depth, active, onSelect }) {
             depth={depth + 1}
             active={active}
             onSelect={onSelect}
+            setSelectedFile={setSelectedFile}
           />
         )}
       </li>
     );
   }
 
+  function getFile(e){
+    e.preventDefault();
+    onSelect(node.name);
+    setSelectedFile(node);
+  }
+
   return (
-    <li>
+    <li className="cursor-pointer">
       <button
-        onClick={() => onSelect(node.name)}
+        onClick={getFile}
         style={{ paddingLeft: `${depth * 12 + 28}px` }}
         className={cn(
-          "w-full flex items-center gap-2 py-1.5 rounded text-sm",
+          "w-full flex items-center gap-2 py-1.5 rounded text-sm cursor-pointer",
           isActive
-            ? "bg-blue-500/20 text-white"
+            ? "bg-blue-500/20 text-white "
             : "text-gray-300 hover:bg-zinc-800"
         )}
       >
@@ -175,7 +150,9 @@ export default function Workspace(params) {
   const [active, setActive] = useState("ChatPanel.jsx");
   const [project, setProject] = useState(null);
   const [files, setFiles] = useState([]);
+  const [allfiles, setAllfiles] = useState([]);
   const {id} = useParams()
+  const [selectedFile, setSelectedFile] = useState(null);
   useEffect(()=>{
     async function getProject() {
       
@@ -187,7 +164,7 @@ export default function Workspace(params) {
         );
   
         setProject(response.data.project);
-        console.log(response.data)
+        setFiles(response.data.tree);
         
       } catch (error) {
         
@@ -197,8 +174,12 @@ export default function Workspace(params) {
     }
     
     getProject();
-    setFiles(project?.files)
+    
   },[id])
+  
+  let a = [1,2];
+
+
 
   const [tabs, setTabs] = useState([
     "Editor.jsx",
@@ -279,9 +260,10 @@ export default function Workspace(params) {
           {/* File Tree */}
           <div className="flex-1 overflow-y-auto px-2 pb-3">
             <FileTree
-              nodes={tree}
+              nodes={files}
               active={active}
               onSelect={setActive}
+              setSelectedFile={setSelectedFile}
             />
           </div>
         </aside>
@@ -326,12 +308,13 @@ export default function Workspace(params) {
               defaultLanguage="javascript"
               theme="vs-dark"
               path={active}
-              defaultValue={files}
+              
               options={{
                 fontSize: 14,
                 minimap: { enabled: false },
                 smoothScrolling: true,
               }}
+              value={selectedFile?selectedFile.content:""}
             />
           </div>
 

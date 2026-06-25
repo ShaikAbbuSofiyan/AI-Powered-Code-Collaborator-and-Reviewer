@@ -38,12 +38,6 @@ const fileSchema = new mongoose.Schema(
       default: "",
     },
 
-    children: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "File",
-      },
-    ],
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

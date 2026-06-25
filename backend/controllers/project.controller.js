@@ -120,6 +120,19 @@ import projectModel from "../models/project.model.js";
     }
   }
 
+  function buildTree(files, parent = null){
+    return files.filter(file => String(file.parent) === String(parent)).map(
+      file => ({
+        _id:file._id,
+        name: file.fileName,
+        isFolder:file.isFolder,
+        ext: file.extension,
+        content: file.content,
+        children: buildTree(files, file._id)
+      })
+    )
+  }
+
   export const getProject = async (req, res) =>{
     try {
       const projectId = req.params.id;
@@ -129,7 +142,12 @@ import projectModel from "../models/project.model.js";
           message: "project not found"
         });
       }
-      res.status(200).json({project});
+      const files = await fileModel.find({project:projectId});
+      const tree = buildTree(files);
+
+
+
+      res.status(200).json({project, tree});
     } catch (error) {
       return res.status(500).json({
         message:`Get Project errro:${error}`
@@ -145,18 +163,43 @@ import projectModel from "../models/project.model.js";
           message: "file name is required"
         })
       }
-     
+      
       const  f = await fileModel.create({
         fileName,
         content,
         project:project,
         createdBy:req.userId
       });
-      return res.status(201).json(project);
+      let p = await projectModel.findById(project || req.project);
+      p.files.push(f._id);
+      p.save();
+      return res.status(201).json(f);
 
     } catch (error) {
       return res.status(500).json({
         message: `Add Files error ${error}`
+      })
+    }
+  }
+
+  export const getFilesNames = async(req, res)=>{
+    try {
+      const projectId = req.params.id;
+      const project = await projectModel.findById(projectId);
+      if(!project){
+        return res.status(504).json({
+          message:"No such of project is available"
+        })
+      }
+      const files = project.files;
+      
+      let retrievedFileNames = files.map(async (fileId)=>{
+        const file = await fileModel.findById(fileId);
+        return file.fileName;
+      })
+    } catch (error) {
+      return res.status(500).json({
+        message: `getFiles error ${error}`
       })
     }
   }

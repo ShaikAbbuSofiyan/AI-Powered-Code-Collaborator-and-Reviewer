@@ -62,7 +62,7 @@ export const isMember = async(req, res, next) =>{
             }
         }
         if(found){
-            req.project = project;
+            req.project = project._id;
         }
         else{
             return res.status(504).json({
