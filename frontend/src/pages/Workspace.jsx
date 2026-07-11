@@ -22,7 +22,8 @@ import {
   SaveAll,
   FilePlusCorner,
   FolderPlus,
-  UserPlus
+  UserPlus,
+  Check
 } from "lucide-react";
 // Helper function
 const cn = (...classes) => classes.filter(Boolean).join("");
@@ -233,8 +234,25 @@ export default function Workspace(params) {
   const [project, setProject] = useState(null);
   const [files, setFiles] = useState([]);
   const [tabs, setTabs] = useState([]);
+  const [showAddCollab, setShowAddCollab] = useState(false);
+  const [collabMail, setCollabMail] = useState("");
   const { id } = useParams();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [message, setMessage] = useState("");
+  const [messageSuccessful, setMessageSuccessful] = useState(false);
+
+
+  useEffect(() => {
+  if (!message) return;
+
+  const timer = setTimeout(() => {
+    setMessage("");
+  }, 1000);
+
+  return () => clearTimeout(timer);
+}, [message]);
+
+
   async function getProject() {
     try {
       const response = await API.get(`/api/projects/${id}`, {
@@ -295,20 +313,6 @@ export default function Workspace(params) {
       
     }
   }
-
-  async function handleAddCollaborator(e) {
-    e.preventDefault();
-    try {
-      const response = await API.post(`/api/projects/${id}/add-collaborator`,{
-        //collaborator mail is needed
-        }, {withCredentials:true})
-        console.log(response.data);
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-
  
 
   return (
@@ -333,7 +337,7 @@ export default function Workspace(params) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <button onClick={handleAddCollaborator} className="flex items-center gap-1 px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm hover:cursor-pointer transition-colors">
+          <button onClick={()=>(setShowAddCollab(true))} className="flex items-center gap-1 px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm hover:cursor-pointer transition-colors">
             <UserPlus size={14}/>
             Add collaborator
           </button>
@@ -501,6 +505,8 @@ export default function Workspace(params) {
                   <p className="text-xs text-gray-400 mb-1">{msg.name}</p>
 
                   {msg.text}
+                 
+                  
                 </div>
               </div>
             ))}
@@ -524,11 +530,82 @@ export default function Workspace(params) {
                   <Send size={14} />
                   Send
                 </button>
+                
               </div>
             </div>
           </div>
         </aside>
       </div>
+      {showAddCollab && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="w-96 bg-zinc-900 rounded-lg p-6 shadow-xl border border-zinc-700">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Enter email of Collab
+            </h2>
+
+            <input
+              type="email"
+              placeholder="e.g. sofiyan1@gmail.com"
+              onChange={(e)=>setCollabMail(e.target.value)}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 outline-none"
+            />
+
+            <div className="flex justify-end gap-2 mt-5">
+
+              <button
+                onClick={() => setShowAddCollab(false)}
+                className="px-4 py-2 rounded bg-zinc-700 hover:bg-zinc-600"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                      const response = await API.post(`/api/projects/${id}/add-collaborator`,{
+                      email:collabMail
+                      }, {withCredentials:true})
+                      setShowAddCollab(false);
+                      setMessageSuccessful(true);
+                      setMessage(response.data.message);
+                      setCollabMail("");
+                    } catch (error) {
+                    console.error(error)
+                    setShowAddCollab(false);
+                    setMessage("error");
+                    setCollabMail("");
+                    
+                  }
+                }}
+                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500"
+              >
+                Add
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {message && 
+      <div className="fixed inset-0 bg-black/60 flex justify-center z-50">
+        <div className="mt-2 w-fit h-fit p-2 flex justify-between  items-center bg-zinc-800 transition-all rounded-1">
+          {
+            messageSuccessful&&
+            <Check size={22} className="text-green-500"/>
+          }
+          {
+            !messageSuccessful &&
+            <X size={22} className="text-red-500"/>
+          }
+          {message}
+        </div>
+      </div>
+      }
+
     </div>
   );
 }

@@ -86,7 +86,8 @@ import projectModel from "../models/project.model.js";
       project.members.push({user: user._id});
       await project.save();
       res.status(200).json({
-        project,
+        message:"Collaborator added successfully",
+        project
       });
     } catch (error) {
       return res.status(500).json({
