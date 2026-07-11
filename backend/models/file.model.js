@@ -37,6 +37,10 @@ const fileSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    dirty: {
+      type:Boolean,
+      default: false
+    },
 
 
     createdBy: {

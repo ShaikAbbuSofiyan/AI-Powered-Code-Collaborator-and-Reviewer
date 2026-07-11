@@ -19,8 +19,11 @@ import {
   Bot,
   Plus,
   X,
+  SaveAll,
+  FilePlusCorner,
+  FolderPlus,
+  UserPlus
 } from "lucide-react";
-
 // Helper function
 const cn = (...classes) => classes.filter(Boolean).join("");
 
@@ -33,105 +36,184 @@ const extColors = {
   py: "text-yellow-400",
 };
 
-
-
-function FileTree({ nodes, depth = 0, active, onSelect, setSelectedFile }) {
+function FileTree({
+  nodes,
+  depth = 0,
+  active,
+  onSelect,
+  setSelectedFile,
+  id,
+  setTabs,
+  setFiles
+}) {
   return (
     <ul className="space-y-1">
-      {nodes.map((node) => (
+      {nodes?.map((node) => (
         <TreeItem
-          key={node.name}
+          key={node?._id}
           node={node}
           depth={depth}
           active={active}
           onSelect={onSelect}
           setSelectedFile={setSelectedFile}
+          id={id}
+          setTabs = {setTabs}
+          setFiles = {setFiles}
+          
         />
       ))}
     </ul>
   );
 }
 
-function TreeItem({ node, depth, active, onSelect, setSelectedFile }) {
+function TreeItem({ node, depth, active, onSelect, setSelectedFile, id , setTabs,setFiles}) {
   const [open, setOpen] = useState(depth < 2);
+  const [creatingFile, setCreatingFile] = useState(null);
+  function getFile(e) {
+      e.preventDefault();
+      onSelect(node.fileName);
+      setSelectedFile(node);
+      setTabs([node.name]);
+  }
 
   const isActive = active === node.name;
+  return (
 
-  if (node.isFolder === true) {
-    return (
+  <div className="">
+    
+    
+    {node.isFolder && 
       <li>
+        <div 
+        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        className="w-full group flex items-center justify-between py-1.5 rounded hover:bg-zinc-800 text-sm text-gray-200"
+        >
+
         <button
           onClick={() => setOpen(!open)}
-          style={{ paddingLeft: `${depth * 12 + 8}px` }}
-          className="w-full flex items-center gap-2 py-1.5 rounded hover:bg-zinc-800 text-sm text-gray-200"
+          className="w-full"
         >
-          {open ? (
-            <ChevronDown size={14} />
-          ) : (
-            <ChevronRight size={14} />
-          )}
+          <div className="w-full flex items-center gap-2 py-1.5 rounded hover:bg-zinc-800 text-sm text-gray-200">
+            {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 
-          {open ? (
-            <FolderOpen size={16} className="text-blue-400" />
-          ) : (
-            <FolderClosed size={16} className="text-blue-400" />
+            {open ? (
+              <FolderOpen size={16} className="text-blue-400" />
+            ) : (
+              <FolderClosed size={16} className="text-blue-400" />
+            )}
+
+            {node.name}
+          </div>
+
+          
+
+        </button>
+        <button
+          onClick={(e) =>(
+            e.stopPropagation(),
+            setCreatingFile({parentId: node._id,isFolder: false}),
+            setOpen(true)
+          )
+          }
+          className="opacity-0 group-hover:opacity-100 font-light cursor-pointer text-zinc-500 mx-2 hover:text-white rounded-md"
+        >
+          <FilePlusCorner size={15}/>
+        </button>
+        <button
+          onClick={(e) =>(
+            e.stopPropagation(),
+            setCreatingFile({parentId: node._id,isFolder: true}),
+            setOpen(true)
+          )
+          }
+          className="opacity-0 group-hover:opacity-100 text-sm font-light cursor-pointer text-zinc-500 mx-2 hover:text-white rounded-md  p-0.2"
+        >
+          <FolderPlus size={15}/>
+        </button>
+        </div>
+
+        {open && node.children && (
+          <>
+            <FileTree
+              nodes={node.children}
+              depth={depth + 1}
+              active={active}
+              onSelect={onSelect}
+              setSelectedFile={setSelectedFile}
+              creatingFile={creatingFile}
+              setCreatingFile={setCreatingFile}
+              id = {id}
+              setTabs={setTabs}
+              setFiles = {setFiles}
+            />
+
+            {String(creatingFile?.parentId) == String(node._id) && (
+              <li
+                style={{
+                  paddingLeft: `${(depth + 1) * 12 + 28}px`,
+                }}
+              >
+                <input
+                  className="border rounded-sm px-2 py-1 text-sm border-gray-700 outline-violet-700"
+                  autoFocus
+                  onKeyDown={async (e) => {
+                    if (e.key === "Enter") {
+                      const response = await API.post(`/api/projects/${id}/file`, {
+                        project: id,
+
+                        parent: node._id,
+
+                        fileName: e.target.value,
+                        isFolder:creatingFile.isFolder,
+                      },{withCredentials:true});
+
+                      setCreatingFile(null);
+                      setFiles(response.data.tree);
+                      setOpen(open)
+                      // await getProject(); // reload tree
+                    }
+
+                    if (e.key === "Escape") {
+                      setCreatingFile(null);
+                    }
+                  }}
+                />
+              </li>
+            )}
+          </>
+        )}
+      </li>
+    }
+
+    {
+      !node.isFolder && 
+      <li>
+        <button
+          onClick={getFile}
+          style={{ paddingLeft: `${depth * 12 + 28}px` }}
+          className={cn(
+            "w-full flex items-center gap-2 py-1.5 rounded text-sm cursor-pointer bg-zinc-800",
+            isActive
+              ? "bg-blue-500/20 text-white "
+              : "text-gray-300 hover:bg-zinc-800",
           )}
+        >
+          <File size={15} className={extColors[node.ext] || "text-gray-400"} />
 
           {node.name}
         </button>
-
-        {open && node.children && (
-          <FileTree
-            nodes={node.children}
-            depth={depth + 1}
-            active={active}
-            onSelect={onSelect}
-            setSelectedFile={setSelectedFile}
-          />
-        )}
       </li>
-    );
-  }
 
-  function getFile(e){
-    e.preventDefault();
-    onSelect(node.name);
-    setSelectedFile(node);
-  }
+  
+    }
 
-  return (
-    <li className="cursor-pointer">
-      <button
-        onClick={getFile}
-        style={{ paddingLeft: `${depth * 12 + 28}px` }}
-        className={cn(
-          "w-full flex items-center gap-2 py-1.5 rounded text-sm cursor-pointer",
-          isActive
-            ? "bg-blue-500/20 text-white "
-            : "text-gray-300 hover:bg-zinc-800"
-        )}
-      >
-        <File
-          size={15}
-          className={extColors[node.ext] || "text-gray-400"}
-        />
-
-        {node.name}
-      </button>
-    </li>
+    
+    
+  </div>
   );
-}
 
-const sampleCode = `import React from "react";
 
-export default function App() {
-  return (
-    <div>
-      <h1>Hello Workspace</h1>
-    </div>
-  );
 }
-`;
 
 const messages = [
   {
@@ -150,42 +232,84 @@ export default function Workspace(params) {
   const [active, setActive] = useState("ChatPanel.jsx");
   const [project, setProject] = useState(null);
   const [files, setFiles] = useState([]);
-  const [allfiles, setAllfiles] = useState([]);
-  const {id} = useParams()
+  const [tabs, setTabs] = useState([]);
+  const { id } = useParams();
   const [selectedFile, setSelectedFile] = useState(null);
-  useEffect(()=>{
-    async function getProject() {
+  async function getProject() {
+    try {
+      const response = await API.get(`/api/projects/${id}`, {
+        withCredentials: true,
+      });
+
+      setProject(response.data.project);
+      setFiles(response.data.tree);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  useEffect(() => {
+
+    getProject();
+  }, [id]);
+
+
+  function updateTree(nodes, fileId, newContent){
+    return nodes.map(node=>{
+      if(String(node._id) == String(fileId)){
+        return {
+          ...node,
+          content:newContent,
+          dirty:true
+        };
+      }
+      if(node.isFolder && node.children){
+        return {
+          ...node,
+          children:updateTree(node.children, fileId, newContent),
+        };
+      }
+      return node;
+    });
+  }
+  function collectDirtyFiles(nodes, dirty = []){
+    for(const node of nodes){
       
-      try {
-  
-        const response = await API.get(
-            `/api/projects/${id}`,
-            { withCredentials: true }
-        );
-  
-        setProject(response.data.project);
-        setFiles(response.data.tree);
-        
-      } catch (error) {
-        
-        console.log(error);
-        
+      if(node.isFolder){
+        collectDirtyFiles(node.children, dirty);
+      }
+      else if(node.dirty){
+        dirty.push(node);
       }
     }
-    
-    getProject();
-    
-  },[id])
-  
-  let a = [1,2];
+    return dirty;
+  }
+
+  async function handleSaveAll(e){
+    e.preventDefault();
+    try {
+      const dirtyFiles = collectDirtyFiles(files);
+      console.log(dirtyFiles);
+      const response = await API.put(`/api/projects/${id}/save`,{dirtyFiles},{withCredentials:true});
+    } catch (error) {
+      console.error(error);
+      
+    }
+  }
+
+  async function handleAddCollaborator(e) {
+    e.preventDefault();
+    try {
+      const response = await API.post(`/api/projects/${id}/add-collaborator`,{
+        //collaborator mail is needed
+        }, {withCredentials:true})
+        console.log(response.data);
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
 
-
-  const [tabs, setTabs] = useState([
-    "Editor.jsx",
-    "ChatPanel.jsx",
-    "agent.js",
-  ]);
+ 
 
   return (
     <div className="h-screen flex flex-col bg-zinc-900 text-white overflow-hidden">
@@ -196,16 +320,12 @@ export default function Workspace(params) {
             <Code2 size={18} />
           </div>
 
-          <span className="font-semibold">
-            CodeCollabAI
-          </span>
+          <span className="font-semibold">CodeCollabAI</span>
         </Link>
 
         <span className="text-gray-500">/</span>
 
-        <span className="text-sm text-gray-300">
-          {project?.title}
-        </span>
+        <span className="text-sm text-gray-300">{project?.title}</span>
 
         <div className="flex items-center gap-1 text-xs bg-zinc-800 px-2 py-1 rounded">
           <GitBranch size={12} />
@@ -213,13 +333,20 @@ export default function Workspace(params) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm">
+          <button onClick={handleAddCollaborator} className="flex items-center gap-1 px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm hover:cursor-pointer transition-colors">
+            <UserPlus size={14}/>
+            Add collaborator
+          </button>
+          <button onClick={handleSaveAll} className="flex items-center gap-1 px-3 py-1.5 rounded bg-green-800 hover:bg-green-700 text-sm hover:cursor-pointer transition-colors">
+            <SaveAll size={14}/>
+            Save all
+          </button>
+          <button className="flex items-center gap-1 px-3 py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-sm hover:cursor-pointer transition-colors">
             <Play size={14} />
             Run
           </button>
 
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded bg-blue-500 hover:bg-blue-600 text-sm">
+          <button className="flex items-center gap-1 px-3 py-1.5 rounded bg-blue-500 hover:bg-blue-600 text-sm hover:cursor-pointer transition-colors">
             <Sparkles size={14} />
             Ask AI
           </button>
@@ -227,7 +354,7 @@ export default function Workspace(params) {
       </header>
 
       {/* MAIN BODY */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden hide-scrollbar ">
         {/* SIDEBAR */}
         <aside className="w-64 border-r border-zinc-700 bg-zinc-950 flex flex-col">
           {/* Search */}
@@ -248,22 +375,23 @@ export default function Workspace(params) {
 
           {/* Explorer */}
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs uppercase text-gray-500">
-              Explorer
-            </span>
+            <span className="text-xs uppercase text-gray-500">Explorer</span>
 
-            <button className="hover:bg-zinc-800 p-1 rounded">
+            <button  className="hover:bg-zinc-800 p-1 rounded">
               <Plus size={15} />
             </button>
           </div>
 
           {/* File Tree */}
-          <div className="flex-1 overflow-y-auto px-2 pb-3">
+          <div className="flex-1 overflow-y-auto px-2 pb-3 hide-scrollbar">
             <FileTree
               nodes={files}
               active={active}
               onSelect={setActive}
               setSelectedFile={setSelectedFile}
+              id = {id}
+              setTabs = {setTabs}
+              setFiles = {setFiles}
             />
           </div>
         </aside>
@@ -280,7 +408,7 @@ export default function Workspace(params) {
                   "px-4 flex items-center gap-2 text-sm border-r border-zinc-700 cursor-pointer",
                   active === tab
                     ? "bg-zinc-900 text-white"
-                    : "text-gray-400 hover:text-white"
+                    : "text-gray-400 hover:text-white",
                 )}
               >
                 <File size={14} />
@@ -292,9 +420,7 @@ export default function Workspace(params) {
                   onClick={(e) => {
                     e.stopPropagation();
 
-                    setTabs(
-                      tabs.filter((item) => item !== tab)
-                    );
+                    setTabs(tabs.filter((item) => item !== tab));
                   }}
                 />
               </div>
@@ -305,26 +431,35 @@ export default function Workspace(params) {
           <div className="flex-1">
             <Editor
               height="100%"
-              defaultLanguage="javascript"
+              defaultLanguage={selectedFile?.language || "javascript"}
               theme="vs-dark"
               path={active}
-              
               options={{
                 fontSize: 14,
                 minimap: { enabled: false },
                 smoothScrolling: true,
               }}
-              value={selectedFile?selectedFile.content:""}
+              value={selectedFile ? selectedFile.content : ""}
+              onChange={(value)=>{
+                if(!selectedFile) return;
+                setSelectedFile(prev=>({
+                  ...prev,
+                  content:value,
+                  dirty:true
+                }))
+                setFiles(prev => {
+                  const updated =  updateTree(prev, selectedFile._id, value);
+                  return updated;
+                })
+              }}
             />
           </div>
 
           {/* Status Bar */}
           <div className="h-7 border-t border-zinc-700 bg-zinc-950 flex items-center px-4 text-xs text-gray-400">
-            <span>JavaScript React</span>
+            <span>{selectedFile?.language}</span>
 
-            <span className="ml-auto">
-              Ln 9, Col 24
-            </span>
+            <span className="ml-auto">Ln 9, Col 24</span>
           </div>
         </section>
 
@@ -337,13 +472,9 @@ export default function Workspace(params) {
             </div>
 
             <div>
-              <p className="text-sm font-medium">
-                CodeCollabAI
-              </p>
+              <p className="text-sm font-medium">CodeCollabAI</p>
 
-              <p className="text-xs text-green-400">
-                Online
-              </p>
+              <p className="text-xs text-green-400">Online</p>
             </div>
           </div>
 
@@ -354,29 +485,20 @@ export default function Workspace(params) {
                 key={i}
                 className={cn(
                   "flex gap-2",
-                  msg.role === "user" &&
-                    "flex-row-reverse"
+                  msg.role === "user" && "flex-row-reverse",
                 )}
               >
                 <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs">
-                  {msg.role === "ai" ? (
-                    <Bot size={14} />
-                  ) : (
-                    "EM"
-                  )}
+                  {msg.role === "ai" ? <Bot size={14} /> : "EM"}
                 </div>
 
                 <div
                   className={cn(
                     "max-w-[80%] p-3 rounded-xl text-sm",
-                    msg.role === "ai"
-                      ? "bg-zinc-800"
-                      : "bg-blue-500/20"
+                    msg.role === "ai" ? "bg-zinc-800" : "bg-blue-500/20",
                   )}
                 >
-                  <p className="text-xs text-gray-400 mb-1">
-                    {msg.name}
-                  </p>
+                  <p className="text-xs text-gray-400 mb-1">{msg.name}</p>
 
                   {msg.text}
                 </div>

@@ -1,6 +1,7 @@
 import express from 'express';
 import { isMember, isOwner, isUserAuth } from '../middleware/auth.middleware.js';
 import { addCollaborator, addFile, createProject, deleteProject, getFilesNames, getProject, getProjects,updateProject } from '../controllers/project.controller.js';
+import { updateFiles } from '../controllers/file.controller.js';
 
 const projectRouter = express.Router();
 
@@ -20,5 +21,6 @@ projectRouter.get('/:id', isUserAuth, isOwner, getProject);
 //api/projects/:id/file/
 projectRouter.post("/:id/file",isUserAuth, isOwner || isMember, addFile);
 projectRouter.post("/:id/files", getFilesNames);
+projectRouter.put("/:id/save", isUserAuth, isOwner || isMember, updateFiles);
 
 export default projectRouter;

@@ -128,7 +128,8 @@ import projectModel from "../models/project.model.js";
         isFolder:file.isFolder,
         ext: file.extension,
         content: file.content,
-        children: buildTree(files, file._id)
+        children: buildTree(files, file._id),
+        dirty:false
       })
     )
   }
@@ -145,8 +146,6 @@ import projectModel from "../models/project.model.js";
       const files = await fileModel.find({project:projectId});
       const tree = buildTree(files);
 
-
-
       res.status(200).json({project, tree});
     } catch (error) {
       return res.status(500).json({
@@ -157,24 +156,26 @@ import projectModel from "../models/project.model.js";
 
   export const addFile = async (req, res) => {
     try {
-      const {project,fileName, content} = req.body;
+      const {project,fileName, content, isFolder} = req.body;
       if(!fileName){
         return res.status(400).json({
           message: "file name is required"
         })
       }
-      
       const  f = await fileModel.create({
+        parent:req.body.parent,
         fileName,
         content,
+        isFolder,
         project:project,
         createdBy:req.userId
       });
-      let p = await projectModel.findById(project || req.project);
+      let p = await projectModel.findById(project || req?.project);
       p.files.push(f._id);
       p.save();
-      return res.status(201).json(f);
-
+      const files = await fileModel.find({project});
+      const tree = buildTree(files)
+      return res.status(201).json({f,tree});
     } catch (error) {
       return res.status(500).json({
         message: `Add Files error ${error}`
