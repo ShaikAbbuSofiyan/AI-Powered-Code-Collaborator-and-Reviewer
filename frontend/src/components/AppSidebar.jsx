@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link,  useLocation, useNavigate } from "react-router-dom";
 import {
   Code2,
   LayoutGrid,
@@ -7,9 +7,11 @@ import {
   MessageSquare,
   Settings,
   LifeBuoy,
-  FilePenLine
+  FilePenLine,
+  LogOut
 } from "lucide-react";
 import { useSelector } from "react-redux";
+import API from "../services/api";
 
 const main = [
   { to: "/dashboard", icon: LayoutGrid, label: "Overview" },
@@ -27,7 +29,15 @@ const footer = [
 export function AppSidebar() {
   const { pathname } = useLocation();
   const user = useSelector(state => state.auth.user);
-  const plan = "Pro"
+  const plan = "Pro";
+
+  const navigate = useNavigate();
+
+  const handleLogout = async (e) =>{
+    const response = await API.get("/api/auth/logout", {withCredentials:true});
+    navigate("/")
+    
+  }
   return (
     <aside
       className="
@@ -143,6 +153,7 @@ export function AppSidebar() {
               "
             >
               {user?.name[0]}
+
             </div>
 
             <div className="min-w-0">
@@ -153,6 +164,9 @@ export function AppSidebar() {
                 {plan}
               </p>
             </div>
+            <button className="text-red-500 mx-2 cursor-pointer" onClick={handleLogout}>
+              <LogOut/>
+            </button>
           </div>
         </div>
       </div>
