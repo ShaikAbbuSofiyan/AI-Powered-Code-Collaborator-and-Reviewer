@@ -97,7 +97,7 @@ const Signup = () => {
             Sign up to create an account
           </p>
 
-          <form className="mt-10 space-y-5 " onSubmit={handleSignup}>
+          <form className="mt-10 space-y-5 " onSubmit={Signup}>
             <div className="space-y-2 space-x-5 flex flex-col ">
               <label htmlFor="name" className="font-semibold">
                 Name
